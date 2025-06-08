@@ -17,13 +17,19 @@ func main() {
 	}
 	//repository
 	TransactionRepository := repository.NewTransactionRepository(dbConnection)
+	BlockRepository := repository.NewBlockRepository(dbConnection)
 	//usecase
-	TransactionUsecase := usecase.NewTransactionUsecase(TransactionRepository)
+	BlockUsecase := usecase.NewBlockUsecase(BlockRepository, TransactionRepository)
+	TransactionUsecase := usecase.NewTransactionUsecase(TransactionRepository, &BlockUsecase)
+
 	//controller
 	transactionController := controller.NewTransactionController(TransactionUsecase)
+	blockController := controller.NewBlockController(BlockUsecase)
 	//routes
 	server.GET("/transaction", transactionController.GetTransactions)
 	server.POST("/transaction", transactionController.PostTransaction)
-
+	server.POST("/transaction/accept/", transactionController.AccepetTransaction)
+	server.GET("/transaction/:id", transactionController.GetTransactionByID)
+	server.GET("/block", blockController.GetBlocks)
 	server.Run(":8000")
 }

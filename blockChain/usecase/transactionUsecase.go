@@ -10,13 +10,15 @@ import (
 
 
 type TransactionUsecase struct{
-	repository repository.TransactionRepository
+    repository repository.TransactionRepository
+    blockUsecase  *BlockUsecase
 }
 
-func NewTransactionUsecase(repo repository.TransactionRepository) TransactionUsecase {
-	return TransactionUsecase{
-		repository: repo,
-	}
+func NewTransactionUsecase(repo repository.TransactionRepository,  blockUC *BlockUsecase) TransactionUsecase {
+    return TransactionUsecase{
+        repository: repo,
+        blockUsecase: blockUC,
+    }
 }
 
 func (tran *TransactionUsecase) NewTransaction(sender string, receiver string, amount float64, tax float64) (*model.Transaction, error) {
@@ -47,4 +49,31 @@ func (tran *TransactionUsecase) GetAllTransactions() ([]model.Transaction, error
 		return nil, err
 	}
 	return transactions, nil
+}
+
+func (tran *TransactionUsecase) GetTransactionByID(id string) (*model.Transaction, error) {
+    transaction, err := tran.repository.GetTransactionByID(id)
+    if err != nil {
+        return nil, err
+    }
+    return transaction, nil
+}
+
+func (tran *TransactionUsecase) AcceptTransaction(id string, assignature string) (*model.Transaction, error) {
+    transaction, err := tran.repository.GetTransactionByID(id)
+    if err != nil {
+        return nil, err
+    }
+    if transaction == nil {
+        return nil, nil
+    }
+    err = tran.repository.UpdateStatusAndSignature(id,assignature)
+    if err != nil {
+        return nil, err
+    }
+_, err = tran.blockUsecase.NewBlockGenesis(transaction.ID)
+    if err != nil {
+        return nil, err
+    }
+    return transaction, nil
 }

@@ -1,11 +1,12 @@
 package repository
 
 import (
-    "context"
-    "time"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/bson"
+	"context"
 	"go-api/model"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 
@@ -60,9 +61,8 @@ func (repo TransactionRepository) PostTransaction(transaction model.Transaction)
 func (repo TransactionRepository) GetTransactionByID(id string) (*model.Transaction, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
 	var transaction model.Transaction
-	err := repo.Collection.FindOne(ctx, bson.M{"id_transaction": id}).Decode(&transaction)
+	err := repo.Collection.FindOne(ctx, bson.M{"id": id}).Decode(&transaction)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil 
@@ -76,7 +76,7 @@ func (repo TransactionRepository) GetTransactionByID(id string) (*model.Transact
 func (r TransactionRepository) UpdateStatusAndSignature(id string, signature string) error {
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
     defer cancel()
-    filter := bson.M{"id_transaction": id}
+    filter := bson.M{"id": id}
     update := bson.M{"$set": bson.M{"status": model.StatusConfirmed, "signature": signature}}
     _, err := r.Collection.UpdateOne(ctx, filter, update)
 	return err
